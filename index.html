@@ -70,7 +70,7 @@ a.linkedin:hover{text-decoration:underline}
   <div class="stat"><div class="label">Total Contacts</div><div class="value purple" id="s-total">-</div></div>
   <div class="stat"><div class="label">Introduced</div><div class="value green" id="s-intro">-</div></div>
   <div class="stat"><div class="label">Accepted (Pending)</div><div class="value yellow" id="s-accepted">-</div></div>
-  <div class="stat"><div class="label">Suggested Only</div><div class="value blue" id="s-suggested">-</div></div>
+  <div class="stat"><div class="label">Has Email</div><div class="value blue" id="s-suggested">-</div></div>
 </div>
 
 <div class="charts">
@@ -104,6 +104,8 @@ a.linkedin:hover{text-decoration:underline}
       <th data-col="Date Suggested">Suggested <span class="sort-arrow">▲</span></th>
       <th data-col="Date Introduced">Introduced <span class="sort-arrow">▲</span></th>
       <th data-col="Status">Status <span class="sort-arrow">▲</span></th>
+      <th data-col="Email">Email <span class="sort-arrow">▲</span></th>
+      <th data-col="Email Status">Email Status <span class="sort-arrow">▲</span></th>
       <th data-col="Notes">Notes <span class="sort-arrow">▲</span></th>
     </tr></thead>
     <tbody id="tbody"></tbody>
@@ -122,10 +124,12 @@ function init() {
   const intro = DATA.filter(r => r.Status === 'Introduced').length;
   const accepted = DATA.filter(r => r.Status === 'Accepted - Pending Intro').length;
   const suggested = DATA.filter(r => r.Status === 'Suggested').length;
+  const hasEmail = DATA.filter(r => r.Email).length;
+  const emailOnly = DATA.filter(r => r.Source && r.Source !== 'WhatsApp CRM').length;
   document.getElementById('s-total').textContent = total;
   document.getElementById('s-intro').textContent = intro;
   document.getElementById('s-accepted').textContent = accepted;
-  document.getElementById('s-suggested').textContent = suggested;
+  document.getElementById('s-suggested').textContent = hasEmail;
 
   // Donut
   const statusData = [
@@ -176,7 +180,7 @@ function render() {
     if (filterStatus && r.Status !== filterStatus) return false;
     if (filterIndustry && r.Industry !== filterIndustry) return false;
     if (searchTerm) {
-      const hay = [r.Name,r.Industry,r.Company,r.Notes,r.Status].join(' ').toLowerCase();
+      const hay = [r.Name,r.Industry,r.Company,r.Notes,r.Status,r.Email||'',r['Email Status']||'',r.Source||''].join(' ').toLowerCase();
       if (!hay.includes(searchTerm)) return false;
     }
     return true;
@@ -204,6 +208,8 @@ function render() {
       <td>${esc(r['Date Suggested'])}</td>
       <td>${esc(r['Date Introduced'])}</td>
       <td><span class="status-badge ${sc}">${esc(r.Status)}</span></td>
+      <td>${esc(r.Email)}</td>
+      <td>${r['Email Status'] ? `<span class="status-badge" style="background:rgba(99,102,241,.15);color:var(--accent2)">${esc(r['Email Status'])}</span>` : ''}</td>
       <td title="${esc(r.Notes)}">${esc(r.Notes)}</td>
     </tr>`;
   }).join('');
