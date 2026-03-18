@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Boardy CRM</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0f1117;--card:#1a1d27;--border:#2a2d3a;--text:#e4e4e7;--muted:#9ca3af;--accent:#6366f1;--accent2:#818cf8;--green:#22c55e;--yellow:#eab308;--blue:#3b82f6;--orange:#f97316}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.header{padding:24px 32px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
+.header h1{font-size:24px;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.header .date-range{color:var(--muted);font-size:14px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;padding:24px 32px}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px}
+.stat .label{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:8px}
+.stat .value{font-size:32px;font-weight:700}
+.stat .value.purple{color:var(--accent2)}
+.stat .value.green{color:var(--green)}
+.stat .value.yellow{color:var(--yellow)}
+.stat .value.blue{color:var(--blue)}
+.charts{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:0 32px 24px}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px}
+.chart-card h3{font-size:14px;color:var(--muted);margin-bottom:16px;text-transform:uppercase;letter-spacing:1px}
+.bar-row{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.bar-label{font-size:13px;min-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-track{flex:1;background:var(--bg);border-radius:4px;height:24px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;display:flex;align-items:center;padding:0 8px;font-size:11px;font-weight:600;min-width:fit-content;transition:width .5s ease}
+.bar-count{font-size:13px;min-width:30px;text-align:right;color:var(--muted)}
+.controls{padding:0 32px 16px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.search{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 16px;color:var(--text);font-size:14px;min-width:280px;outline:none}
+.search:focus{border-color:var(--accent)}
+select{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 16px;color:var(--text);font-size:14px;outline:none;cursor:pointer}
+select:focus{border-color:var(--accent)}
+.count-badge{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 16px;font-size:14px;color:var(--muted)}
+.table-wrap{padding:0 32px 32px;overflow-x:auto}
+table{width:100%;border-collapse:collapse;background:var(--card);border-radius:12px;overflow:hidden}
+th{background:var(--bg);padding:12px 16px;text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);position:sticky;top:0;cursor:pointer;user-select:none;white-space:nowrap}
+th:hover{color:var(--text)}
+th .sort-arrow{margin-left:4px;opacity:.4}
+th.active .sort-arrow{opacity:1;color:var(--accent)}
+td{padding:10px 16px;border-top:1px solid var(--border);font-size:14px;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+tr:hover td{background:rgba(99,102,241,.05)}
+.status-badge{display:inline-block;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600}
+.status-introduced{background:rgba(34,197,94,.15);color:var(--green)}
+.status-accepted{background:rgba(234,179,8,.15);color:var(--yellow)}
+.status-suggested{background:rgba(59,130,246,.15);color:var(--blue)}
+a.linkedin{color:var(--accent2);text-decoration:none}
+a.linkedin:hover{text-decoration:underline}
+.donut-row{display:flex;align-items:center;gap:24px}
+.donut-svg{flex-shrink:0}
+.donut-legend{display:flex;flex-direction:column;gap:8px}
+.legend-item{display:flex;align-items:center;gap:8px;font-size:13px}
+.legend-dot{width:10px;height:10px;border-radius:50%}
+@media(max-width:768px){
+  .charts{grid-template-columns:1fr}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .header,.stats,.controls,.table-wrap,.charts{padding-left:16px;padding-right:16px}
+  .bar-label{min-width:100px}
+}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>Boardy CRM</h1>
+  <span class="date-range">12/21/25 — 3/17/26</span>
+</div>
+
+<div class="stats">
+  <div class="stat"><div class="label">Total Contacts</div><div class="value purple" id="s-total">-</div></div>
+  <div class="stat"><div class="label">Introduced</div><div class="value green" id="s-intro">-</div></div>
+  <div class="stat"><div class="label">Accepted (Pending)</div><div class="value yellow" id="s-accepted">-</div></div>
+  <div class="stat"><div class="label">Suggested Only</div><div class="value blue" id="s-suggested">-</div></div>
+</div>
+
+<div class="charts">
+  <div class="chart-card">
+    <h3>Status Breakdown</h3>
+    <div class="donut-row">
+      <svg class="donut-svg" width="140" height="140" viewBox="0 0 140 140" id="donut"></svg>
+      <div class="donut-legend" id="donut-legend"></div>
+    </div>
+  </div>
+  <div class="chart-card">
+    <h3>Top Industries</h3>
+    <div id="industry-bars"></div>
+  </div>
+</div>
+
+<div class="controls">
+  <input type="text" class="search" id="search" placeholder="Search name, company, industry, notes...">
+  <select id="filter-status"><option value="">All Statuses</option></select>
+  <select id="filter-industry"><option value="">All Industries</option></select>
+  <span class="count-badge" id="showing">-</span>
+</div>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr>
+      <th data-col="Name">Name <span class="sort-arrow">▲</span></th>
+      <th data-col="Industry">Industry <span class="sort-arrow">▲</span></th>
+      <th data-col="Company">Company <span class="sort-arrow">▲</span></th>
+      <th data-col="LinkedIn">LinkedIn <span class="sort-arrow">▲</span></th>
+      <th data-col="Date Suggested">Suggested <span class="sort-arrow">▲</span></th>
+      <th data-col="Date Introduced">Introduced <span class="sort-arrow">▲</span></th>
+      <th data-col="Status">Status <span class="sort-arrow">▲</span></th>
+      <th data-col="Notes">Notes <span class="sort-arrow">▲</span></th>
+    </tr></thead>
+    <tbody id="tbody"></tbody>
+  </table>
+</div>
+
+<script>
+let DATA = [];
+fetch("data.json").then(r=>r.json()).then(d=>{DATA=d;init();});
+let sortCol = 'Name', sortAsc = true;
+let filterStatus = '', filterIndustry = '', searchTerm = '';
+
+function init() {
+  // Stats
+  const total = DATA.length;
+  const intro = DATA.filter(r => r.Status === 'Introduced').length;
+  const accepted = DATA.filter(r => r.Status === 'Accepted - Pending Intro').length;
+  const suggested = DATA.filter(r => r.Status === 'Suggested').length;
+  document.getElementById('s-total').textContent = total;
+  document.getElementById('s-intro').textContent = intro;
+  document.getElementById('s-accepted').textContent = accepted;
+  document.getElementById('s-suggested').textContent = suggested;
+
+  // Donut
+  const statusData = [
+    { label: 'Accepted - Pending', count: accepted, color: '#eab308' },
+    { label: 'Suggested', count: suggested, color: '#3b82f6' },
+    { label: 'Introduced', count: intro, color: '#22c55e' }
+  ];
+  drawDonut(statusData, total);
+
+  // Industry bars
+  const indCounts = {};
+  DATA.forEach(r => { if (r.Industry) indCounts[r.Industry] = (indCounts[r.Industry]||0)+1; });
+  const sorted = Object.entries(indCounts).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  const maxInd = sorted[0]?.[1]||1;
+  const colors = ['#6366f1','#818cf8','#a78bfa','#c4b5fd','#6366f1','#818cf8','#a78bfa','#c4b5fd','#6366f1','#818cf8'];
+  document.getElementById('industry-bars').innerHTML = sorted.map(([name,count],i) =>
+    `<div class="bar-row"><span class="bar-label">${name}</span><div class="bar-track"><div class="bar-fill" style="width:${(count/maxInd*100)}%;background:${colors[i]}">${count}</div></div></div>`
+  ).join('');
+
+  // Filters
+  const statuses = [...new Set(DATA.map(r=>r.Status).filter(Boolean))].sort();
+  const industries = [...new Set(DATA.map(r=>r.Industry).filter(Boolean))].sort();
+  const sSel = document.getElementById('filter-status');
+  statuses.forEach(s => { const o = document.createElement('option'); o.value=s; o.textContent=s; sSel.appendChild(o); });
+  const iSel = document.getElementById('filter-industry');
+  industries.forEach(s => { const o = document.createElement('option'); o.value=s; o.textContent=s; iSel.appendChild(o); });
+
+  // Events
+  document.getElementById('search').addEventListener('input', e => { searchTerm = e.target.value.toLowerCase(); render(); });
+  sSel.addEventListener('change', e => { filterStatus = e.target.value; render(); });
+  iSel.addEventListener('change', e => { filterIndustry = e.target.value; render(); });
+  document.querySelectorAll('th[data-col]').forEach(th => {
+    th.addEventListener('click', () => {
+      const col = th.dataset.col;
+      if (sortCol === col) sortAsc = !sortAsc; else { sortCol = col; sortAsc = true; }
+      document.querySelectorAll('th').forEach(t=>t.classList.remove('active'));
+      th.classList.add('active');
+      th.querySelector('.sort-arrow').textContent = sortAsc ? '▲' : '▼';
+      render();
+    });
+  });
+
+  render();
+}
+
+function render() {
+  let rows = DATA.filter(r => {
+    if (filterStatus && r.Status !== filterStatus) return false;
+    if (filterIndustry && r.Industry !== filterIndustry) return false;
+    if (searchTerm) {
+      const hay = [r.Name,r.Industry,r.Company,r.Notes,r.Status].join(' ').toLowerCase();
+      if (!hay.includes(searchTerm)) return false;
+    }
+    return true;
+  });
+
+  rows.sort((a,b) => {
+    let va = (a[sortCol]||'').toString().toLowerCase();
+    let vb = (b[sortCol]||'').toString().toLowerCase();
+    if (va < vb) return sortAsc ? -1 : 1;
+    if (va > vb) return sortAsc ? 1 : -1;
+    return 0;
+  });
+
+  document.getElementById('showing').textContent = `Showing ${rows.length} of ${DATA.length}`;
+
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = rows.map(r => {
+    const sc = r.Status === 'Introduced' ? 'status-introduced' : r.Status === 'Suggested' ? 'status-suggested' : 'status-accepted';
+    const li = r.LinkedIn ? `<a class="linkedin" href="${r.LinkedIn}" target="_blank" rel="noopener">Profile</a>` : '';
+    return `<tr>
+      <td title="${esc(r.Name)}">${esc(r.Name)}</td>
+      <td>${esc(r.Industry)}</td>
+      <td>${esc(r.Company)}</td>
+      <td>${li}</td>
+      <td>${esc(r['Date Suggested'])}</td>
+      <td>${esc(r['Date Introduced'])}</td>
+      <td><span class="status-badge ${sc}">${esc(r.Status)}</span></td>
+      <td title="${esc(r.Notes)}">${esc(r.Notes)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function esc(s) { if (!s) return ''; const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+function drawDonut(data, total) {
+  const svg = document.getElementById('donut');
+  const cx=70, cy=70, r=55, sw=20;
+  let cumulative = 0;
+  const paths = data.map(d => {
+    const pct = d.count / total;
+    const start = cumulative * 2 * Math.PI - Math.PI/2;
+    cumulative += pct;
+    const end = cumulative * 2 * Math.PI - Math.PI/2;
+    const large = pct > 0.5 ? 1 : 0;
+    const x1 = cx + r*Math.cos(start), y1 = cy + r*Math.sin(start);
+    const x2 = cx + r*Math.cos(end), y2 = cy + r*Math.sin(end);
+    return `<path d="M${x1},${y1} A${r},${r} 0 ${large} 1 ${x2},${y2}" fill="none" stroke="${d.color}" stroke-width="${sw}"/>`;
+  });
+  svg.innerHTML = paths.join('') + `<text x="${cx}" y="${cy}" text-anchor="middle" dy=".35em" fill="#e4e4e7" font-size="20" font-weight="700">${total}</text>`;
+
+  const legend = document.getElementById('donut-legend');
+  legend.innerHTML = data.map(d =>
+    `<div class="legend-item"><span class="legend-dot" style="background:${d.color}"></span>${d.label}: ${d.count} (${Math.round(d.count/total*100)}%)</div>`
+  ).join('');
+}
+
+</script>
+</body>
+</html>
